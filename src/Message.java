@@ -1,8 +1,7 @@
 import java.io.Serializable;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-@XmlRootElement(name = "message")
+import org.json.simple.JSONObject;
+
 public class Message implements Serializable {
 
    private static final long serialVersionUID = 1L;
@@ -11,49 +10,65 @@ public class Message implements Serializable {
    private String duration;
    private String timestamp;
    private String id;
+   
+   public static String key_category = "category";
+   public static String key_job = "job";
+   public static String key_duration = "duration";
+   public static String key_timestamp = "timestamp";
+   public static String key_id = "id";
 
    public Message(){}
 
    public Message(String category, String job, String duration, String timestamp, String id){
-      this.id = id;
+
       this.category = category;
+      this.job = job;
       this.duration = duration;
+      this.timestamp = timestamp;
+      this.id = id;
    }
 
-   public String getId() {
+
+public Message(JSONObject object) {
+	this.category = (String)object.get(key_category);
+	this.job = (String)object.get(key_job);
+	this.duration = (String)object.get(key_duration);
+	setTimestamp((String)object.get(key_timestamp));
+	this.id = (String)object.get(key_id);
+}
+
+public String getId() {
       return id;
    }
-   @XmlElement
    public void setId(String id) {
       this.id = id;
    }
    public String getCategory() {
       return category;
    }
-   @XmlElement
       public void setCategory(String category) {
       this.category = category;
    }
    public String getJob() {
       return job;
    }
-   @XmlElement
    public void setJob(String job) {
       this.job = job;
    }	
    public String getDuration() {
 	      return duration;
 	   }
-   @XmlElement
    public void setDuration(String duration) {
       this.duration = duration;
    }	
    public String getTimestamp() {
 	      return timestamp;
 	   }
-   @XmlElement
    public void setTimestamp(String timestamp) {
-      this.timestamp = timestamp;
+	   	if (timestamp.length()==19) {
+	   		timestamp+=":000";
+	   	}
+	   	this.timestamp = timestamp;
    }	
 
    @Override
@@ -70,5 +85,23 @@ public class Message implements Serializable {
          }			
       }
       return false;
-   }	
+   }
+
+	public void print() {
+		System.out.println("Message:");
+		System.out.println("\tcategory:\t"+this.category);
+		System.out.println("\tjob:\t\t"+this.job);
+		System.out.println("\tduration:\t"+this.duration);
+		System.out.println("\ttimestamp:\t"+this.timestamp);
+		System.out.println("\tid:\t\t"+this.id);
+	}	
+	public String toString() {
+		String s = "Message:\n";
+		s+="\tcategory:\t"+this.category+"\n";
+		s+="\tjob:\t\t"+this.job+"\n";
+		s+="\tduration:\t"+this.duration+"\n";
+		s+="\ttimestamp:\t"+this.timestamp+"\n";
+		s+="\tid:\t\t"+this.id;
+		return s;
+	}	
 }

@@ -3,7 +3,18 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Observable;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.ContainerFactory;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 /**
  * Diese Klasse übernimmt die Kommunikation zwischen einem einzelnen Client und dem Server.
@@ -19,7 +30,9 @@ public class TextServerHandler extends Observable implements Runnable
    * 
    */
   private Socket clientSocket;
-  private String msg = null;
+  private Message msg = null;
+  private JSONParser parser;
+  private ContainerFactory containerFactory;
 
   /**
    * Konstruktor, dem der Client-Socket übergeben wird.
@@ -29,8 +42,19 @@ public class TextServerHandler extends Observable implements Runnable
   public TextServerHandler(Socket _clientSocket)
   {
     this.clientSocket = _clientSocket;
+    parser = new JSONParser();
+
+	containerFactory = new ContainerFactory(){
+	    public List creatArrayContainer() {
+	        return new LinkedList();
+	    }
+
+	    public Map createObjectContainer() {
+	        return new LinkedHashMap();
+	    }                     
+	};
   }
-  public String getMessage() {
+  public Message getMessage() {
 	  return msg;
   }
 
@@ -53,24 +77,23 @@ public class TextServerHandler extends Observable implements Runnable
       // und ein "readLine" dadurch nichts mehr zurückliefert. 
       String strInput = null;
       System.out.println ("Thread " + Thread.currentThread().getId() + " für Clientanfrage wartet auf Antwort...");
-      msg = "Client connected";
-      setChanged();
-      notifyObservers();
       while ((strInput = in.readLine()) != null)
       {
-        System.out.println("Thread " + Thread.currentThread().getId() + ">  " + strInput);
-        msg = "Client:"+strInput;
-        setChanged();
-        notifyObservers();
-        // Die Eingabe in "UpperCase" umwandeln und als komplette Zeile an Client zurückschieben.
-        // "println" sorgt dafür, dass die Daten gesendet werden.
-        out.println(strInput.toUpperCase());
-        
-        System.out.println("Thread " + Thread.currentThread().getId() + " für Clientanfrage next round");
+	    	  try {
+					
+		        Map json = (Map)parser.parse(strInput, containerFactory);
+		        
+		        Iterator iter = json.entrySet().iterator();
+		        JSONObject jo = (JSONObject) parser.parse(strInput);
+		        msg = new Message(jo);
+	    	  
+		        System.out.println("Thread " + Thread.currentThread().getId() + ">  " + strInput);
+		        setChanged();
+		        notifyObservers(msg);
+	    	  } catch(ParseException pe) {
+	    		  System.out.println(pe);
+	    	  }
       }
-      msg = "Client disconnected";
-      setChanged();
-      notifyObservers();
       System.out.println("Thread " + Thread.currentThread().getId() + " ist fertig!");
     }
     catch (IOException ioEx)
